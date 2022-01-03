@@ -7,7 +7,7 @@ public class Item : MonoBehaviour
 {
     public bool food;
     public int numCalories;
-    public int healthRating;
+    public int totalFat, satFat, transFat;
 
     private void OnTriggerEnter2D(Collider2D col)
     {

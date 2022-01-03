@@ -10,7 +10,7 @@ public class WorldGenerator : MonoBehaviour
     const int FLORA_MULT = 4;
 
     // general world
-    public GameObject world, grass, water;
+    public GameObject world, water;
     GameObject plot;
 
     // bitMaps
@@ -33,14 +33,14 @@ public class WorldGenerator : MonoBehaviour
         // general world
         bitMap = GenerateBitMap(SIZE);
         SmoothBitMap(bitMap, SIZE);
-        PlotBitMap(bitMap, SIZE, water, grass, 0, world);
+        PlotBitMap(bitMap, SIZE, water, 0, world);
 
         // flora
         floraMap = GenerateBitMap(SIZE * FLORA_MULT);
-        //SmoothBitMap(floraMap, SIZE * FLORA_MULT);
-        //ApplyLandRestrictions();
-        //SmoothBitMap(floraMap, SIZE * FLORA_MULT);
-        //PlotFloraMap();
+        SmoothBitMap(floraMap, SIZE * FLORA_MULT); 
+        ApplyLandRestrictions();
+        SmoothBitMap(floraMap, SIZE * FLORA_MULT);
+        PlotFloraMap();
 
         // spawn player on land
         SpawnItem(player);
@@ -108,7 +108,7 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
-    void PlotBitMap(int[,] mapToPlot, int size, GameObject item0, GameObject item1, int level, GameObject parent)
+    void PlotBitMap(int[,] mapToPlot, int size, GameObject item0, int level, GameObject parent)
     {
         // build game map from bitMap
         for (int r = 0; r < size; r++)
@@ -118,18 +118,13 @@ public class WorldGenerator : MonoBehaviour
             {
                 // every box
                 // find type
-                if (mapToPlot[r, c] == 1)
+                if (mapToPlot[r, c] == 0)
                 {
-                    plot = item1;
-                }
-                else
-                {
-                    plot = item0;
-                }
+                    // place plot
+                    GameObject newPlot = Instantiate(item0, new Vector3(c, r, level), Quaternion.identity);
+                    newPlot.transform.parent = parent.transform;
 
-                // place plot
-                GameObject newPlot = Instantiate(plot, new Vector3(c, r, level), Quaternion.identity);
-                newPlot.transform.parent = parent.transform;
+                }
             }
         }
     }
