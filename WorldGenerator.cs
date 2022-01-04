@@ -5,50 +5,32 @@ using UnityEngine;
 public class WorldGenerator : MonoBehaviour
 {
     // CONSTANTS
-    const int SIZE = 100;
+    const int SIZE = 30;
     const int SMOOTHS = 7;
     const int FLORA_MULT = 4;
-
+    
     // general world
-    public GameObject world, water;
-    GameObject plot;
-
+    public GameObject world;
+    
     // bitMaps
-    private int[,] bitMap = new int[SIZE, SIZE];
-    private int[,] caveMap = new int[SIZE, SIZE];
     private int[,] floraMap = new int[SIZE * FLORA_MULT, SIZE * FLORA_MULT];
 
     // flora
-    public GameObject tree1;
+    public GameObject tree0, tree1, currTree;
 
     // player
     public GameObject player;
-
-    // cave system
-    public GameObject underground, floor, wall;
-
+    
     // Start is called before the first frame update
     void Start()
     {
-        // general world
-        bitMap = GenerateBitMap(SIZE);
-        SmoothBitMap(bitMap, SIZE);
-        PlotBitMap(bitMap, SIZE, water, 0, world);
-
         // flora
         floraMap = GenerateBitMap(SIZE * FLORA_MULT);
         SmoothBitMap(floraMap, SIZE * FLORA_MULT); 
-        ApplyLandRestrictions();
-        SmoothBitMap(floraMap, SIZE * FLORA_MULT);
         PlotFloraMap();
 
         // spawn player on land
         SpawnItem(player);
-
-        // generate cave system
-        //caveMap = GenerateBitMap(SIZE);
-        //SmoothBitMap(caveMap, SIZE);
-        //PlotBitMap(caveMap, SIZE, wall, floor, -1, underground);
     }
 
     int[,] GenerateBitMap(int size)
@@ -108,49 +90,6 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
-    void PlotBitMap(int[,] mapToPlot, int size, GameObject item0, int level, GameObject parent)
-    {
-        // build game map from bitMap
-        for (int r = 0; r < size; r++)
-        {
-            // every row
-            for (int c = 0; c < size; c++)
-            {
-                // every box
-                // find type
-                if (mapToPlot[r, c] == 0)
-                {
-                    // place plot
-                    GameObject newPlot = Instantiate(item0, new Vector3(c, r, level), Quaternion.identity);
-                    newPlot.transform.parent = parent.transform;
-
-                }
-            }
-        }
-    }
-
-    void ApplyLandRestrictions()
-    {
-        // set all water spaces to no fauna
-        for (int r = 0; r < SIZE * FLORA_MULT; r++)
-        {
-            // every row
-            for (int c = 0; c < SIZE * FLORA_MULT; c++)
-            {
-                // every box
-                // find type
-                if (floraMap[r, c] == 1)
-                {
-                    // check if the tree is over a water plot
-                    if (bitMap[Mathf.FloorToInt((float) r / FLORA_MULT), Mathf.FloorToInt((float) c / FLORA_MULT)] == 0)
-                    {
-                        floraMap[r, c] = 0;
-                    }
-                }
-            }
-        }
-    }
-
     void PlotFloraMap()
     {
         // build game map from bitMap
@@ -163,10 +102,20 @@ public class WorldGenerator : MonoBehaviour
                 // find type
                 if (floraMap[r, c] == 1)
                 {
+                    if (Random.Range(0,4) <= 2)
+                    {
+                        currTree = tree0;
+                    }
+                    else
+                    {
+                        currTree = tree1;
+                    }
+                    
                     // place plot
-                    GameObject newFlora = Instantiate(tree1,
+                    GameObject newFlora = Instantiate(currTree,
                         new Vector3((float) c / FLORA_MULT - ((float) FLORA_MULT / 10), (float) r / FLORA_MULT, -1),
                         Quaternion.identity);
+                    newFlora.transform.localScale = new Vector3(Random.Range(2f, 2.6f), Random.Range(2f, 2.8f), 1);
                     newFlora.transform.parent = world.transform;
                 }
             }
@@ -180,7 +129,7 @@ public class WorldGenerator : MonoBehaviour
         {
             int r = Random.Range(1, SIZE - 1);
             int c = Random.Range(1, SIZE - 1);
-            if (bitMap[r, c] == 1 && floraMap[r * FLORA_MULT, c * FLORA_MULT] == 0)
+            if (floraMap[r * FLORA_MULT, c * FLORA_MULT] == 0)
             {
                 Instantiate(toSpawn, new Vector3(c, r, 0), Quaternion.identity);
                 spawned = true;

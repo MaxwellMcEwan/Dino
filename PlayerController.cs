@@ -7,23 +7,28 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     // CONST SIZE ENERGY REQUIREMENT
-    private const int ENERGY_REQUIREMENT = 100;
+    private const int ENERGY_REQUIREMENT = 500;
     private const float GROWTH_RATE = 1.1f;
+    private const float SPEED_GROWTH = 1.05f;
+    private const float BASE_RUN = .8f;
 
     Rigidbody2D body;
     float horizontal;
     private float vertical;
-    private float runSpeed = 4.0f;
+    private float runSpeed;
     
     private SpriteRenderer playerSprite;
     private Animator animator;
     private bool growing;
 
     private int currentEnergy = 0;
-    private int level;
+    public int level = 1;
+    private int size = 1;
 
     void Start()
     {
+        UpdateCameraSize();
+        UpdateSpeed();
         body = GetComponent<Rigidbody2D>();
         playerSprite = GetComponentInChildren<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
@@ -80,7 +85,7 @@ public class PlayerController : MonoBehaviour
     bool CheckForGrowth()
     {
         // check for next level of growth
-        return currentEnergy >= ENERGY_REQUIREMENT * level;
+        return currentEnergy >= ENERGY_REQUIREMENT * size;
     }
 
     IEnumerator Grow()
@@ -94,7 +99,13 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSecondsRealtime(.1f);
         // midway through the animation, grow
         transform.localScale *= GROWTH_RATE;
-        level++;
+        size++;
+        UpdateCameraSize();
+        UpdateSpeed();
+        if (size % 10 == 0)
+        {
+            level++;
+        }
         if (!CheckForGrowth())
         {
             // increment size level and reset our energy
@@ -115,13 +126,35 @@ public class PlayerController : MonoBehaviour
         vertical = 0;
     }
 
-    void OnCollisionStay2D(Collision2D col)
+    void OnCollisionEnter2D(Collision2D col)
     {
-        if (col.transform.CompareTag("Tree") && Input.GetKey(KeyCode.Space))
+        if (col.transform.CompareTag("Tree"))
         {
-            col.transform.rotation = new Quaternion(.6f, 0, 0, 1);
-            col.transform.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, .2f);
-            col.transform.GetComponent<Collider2D>().enabled = false;
+            switch (level)
+            {
+                case 1:
+                    col.transform.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, .2f);
+                    col.transform.GetComponent<Collider2D>().enabled = false;
+                    break;
+                default:
+                    if (Input.GetKey(KeyCode.Space))
+                    {
+                        col.transform.rotation = new Quaternion(.6f, 0, 0, 1);
+                        col.transform.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, .2f);
+                        col.transform.GetComponent<Collider2D>().enabled = false;
+                    }
+                    break;
+            }
         }
+    }
+
+    void UpdateCameraSize()
+    {
+        Camera.main.orthographicSize = transform.localScale.x * 2;
+    }
+
+    void UpdateSpeed()
+    {
+        runSpeed = transform.localScale.x * 2f;
     }
 }

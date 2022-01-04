@@ -1,17 +1,22 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 public class ItemSpawner : MonoBehaviour
 {
-    private const int GLOBAL_NUM = 100;
+    private const int GLOBAL_NUM = 200;
     private WorldGenerator worldGenerator;
+
+    private string[] details = new string[] {"Calories", "Carbohydrates", "Protein", "Fat", "SatFat"};
     
     //define a list
     public static List <GameObject> items = new List<GameObject>();
 
-    Dictionary<string, Dictionary<string, object>> itemData = new Dictionary<string, Dictionary<string, object>>();
+    Dictionary<string, Dictionary<string, float>> itemData = new Dictionary<string, Dictionary<string, float>>();
     
     // Start is called before the first frame update
     void Start()
@@ -39,14 +44,26 @@ public class ItemSpawner : MonoBehaviour
     { 
         // choose random item to spawn from list
         GameObject spawnItem = items[Random.Range(1, 3)];
+        if (itemData.ContainsKey(spawnItem.name))
+        { 
+            Item spawnDetails = spawnItem.GetComponent<Item>();
+            spawnDetails.SetData(Mathf.RoundToInt(itemData[spawnItem.name]["Calories"]),
+                itemData[spawnItem.name]["Carbohydrates"],
+                itemData[spawnItem.name]["Protein"],
+                itemData[spawnItem.name]["Fat"],
+                itemData[spawnItem.name]["SatFat"]);
+        }
+        
         // use world generators spawn function to put item on the map
         worldGenerator.SpawnItem(spawnItem);
     }
 
     void ReadItemDataIn()
     {
-        StreamReader strReader = new StreamReader("C:\\Users\\maxwe\\OneDrive\\Documents\\Unity Projects\\MyGame\\Assets\\ItemData.csv");
+        StreamReader strReader = new StreamReader("C:\\Users\\maxwe\\OneDrive\\Documents\\Unity Projects\\MyGame\\Assets\\Scripts\\ItemData.csv");
         bool endOfFile = false;
+        // skip a line
+        strReader.ReadLine();
         while (!endOfFile)
         {
             string data = strReader.ReadLine();
@@ -57,14 +74,13 @@ public class ItemSpawner : MonoBehaviour
             }
 
             var dataValues = data.Split(',');
-            
-            Dictionary<string, object> itemDetails = new Dictionary<string, object>();
-            itemDetails.Add("Calories", dataValues[1]);
-            itemDetails.Add("Carbohydrates", dataValues[2]);
-            itemDetails.Add("Protein", dataValues[3]);
-            itemDetails.Add("Fat", dataValues[4]);
-            itemDetails.Add("SatFat", dataValues[5]);
+            Dictionary<string, float> itemDetails = new Dictionary<string, float>();
 
+            for (int i =0; i < 5; i++)
+            {
+                itemDetails.Add(details[i], float.Parse(dataValues[i + 1]));
+            }
+            
             itemData.Add(dataValues[0], itemDetails);
         }
     }

@@ -5,18 +5,27 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
-    public bool food;
-    public int numCalories;
-    public int totalFat, satFat, transFat;
+    public int calories;
+    public float carbs, protein, fat, satFat, transFat;
 
     private void OnTriggerEnter2D(Collider2D col)
     {
         if (col.transform.tag == "Player")
         {
             // give the item to the player
-            col.transform.GetComponent<PlayerController>().Eat(numCalories);
+            col.transform.GetComponent<PlayerController>().Eat(calories);
             // destroy the item
             Destroy(this.gameObject);
         }
+    }
+
+    public void SetData(int cal, float carb, float prot, float fatContent, float saturFat)
+    {
+        calories = cal;
+        carbs = carb;
+        protein = prot;
+        fat = fatContent;
+        satFat = saturFat;
+        transFat = fat - saturFat;
     }
 }
