@@ -9,11 +9,9 @@ public class PlayerController : MonoBehaviour
     // CONST SIZE ENERGY REQUIREMENT
     private const int ENERGY_REQUIREMENT = 500;
     private const float GROWTH_RATE = 1.1f;
-    private const float SPEED_GROWTH = 1.05f;
-    private const float BASE_RUN = .8f;
 
     Rigidbody2D body;
-    float horizontal;
+    private float horizontal;
     private float vertical;
     private float runSpeed;
     
@@ -76,13 +74,13 @@ public class PlayerController : MonoBehaviour
     {
         // add the calories
         currentEnergy += calories;
-        if (CheckForGrowth())
+        if (CanGrow())
         {
-            StartCoroutine("Grow");
+            StartCoroutine(Grow());
         }
     }
 
-    bool CheckForGrowth()
+    bool CanGrow()
     {
         // check for next level of growth
         return currentEnergy >= ENERGY_REQUIREMENT * size;
@@ -106,17 +104,16 @@ public class PlayerController : MonoBehaviour
         {
             level++;
         }
-        if (!CheckForGrowth())
+        if (!CanGrow())
         {
             // increment size level and reset our energy
             currentEnergy = 0;
-            animator.SetInteger("State", 0);
             yield return new WaitForSecondsRealtime(1f);
             growing = false;
         }
         else
         {
-            StartCoroutine("Grow");
+            StartCoroutine(Grow());
         }
     }
 
@@ -130,22 +127,43 @@ public class PlayerController : MonoBehaviour
     {
         if (col.transform.CompareTag("Tree"))
         {
+            SpriteRenderer spriteRend = col.transform.GetComponent<SpriteRenderer>();
+            Collider2D col2D = col.transform.GetComponent<Collider2D>();
+
             switch (level)
             {
                 case 1:
-                    col.transform.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, .2f);
-                    col.transform.GetComponent<Collider2D>().enabled = false;
+                    
+                    spriteRend.color = new Color(0, 0, 0, .2f);
+                    col2D.enabled = false;
+
+                    StartCoroutine(ResetObstacle(col.gameObject, spriteRend, col2D));
                     break;
                 default:
                     if (Input.GetKey(KeyCode.Space))
                     {
                         col.transform.rotation = new Quaternion(.6f, 0, 0, 1);
-                        col.transform.GetComponent<SpriteRenderer>().color = new Color(0, 0, 0, .2f);
-                        col.transform.GetComponent<Collider2D>().enabled = false;
+                        spriteRend.color = new Color(0, 0, 0, .2f);
+                        col2D.enabled = false;
                     }
                     break;
             }
         }
+    }
+
+    IEnumerator ResetObstacle(GameObject obst, SpriteRenderer spriteRenderer, Collider2D collider2D)
+    {
+        bool reset = false;
+        do
+        {
+            yield return new WaitForSeconds(.5f);
+            if (Vector2.Distance(transform.position, obst.transform.position) >= .3f)
+            {
+                spriteRenderer.color = new Color(1, 1, 1, 1);
+                collider2D.enabled = true;
+                reset = true;
+            }
+        } while (!reset);
     }
 
     void UpdateCameraSize()

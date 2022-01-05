@@ -1,6 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour
 {
@@ -11,6 +14,7 @@ public class WorldGenerator : MonoBehaviour
     
     // general world
     public GameObject world;
+    public Color groundColor = new Color((float)117/255, (float)154/255, 128/255, 1);
     
     // bitMaps
     private int[,] floraMap = new int[SIZE * FLORA_MULT, SIZE * FLORA_MULT];
@@ -22,8 +26,10 @@ public class WorldGenerator : MonoBehaviour
     public GameObject player;
     
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
+        Camera.main.backgroundColor = groundColor;
+        
         // flora
         floraMap = GenerateBitMap(SIZE * FLORA_MULT);
         SmoothBitMap(floraMap, SIZE * FLORA_MULT); 
@@ -31,6 +37,12 @@ public class WorldGenerator : MonoBehaviour
 
         // spawn player on land
         SpawnItem(player);
+        player = FindObjectOfType<PlayerController>().gameObject;
+    }
+
+    private void Update()
+    {
+        TrackPlayer();
     }
 
     int[,] GenerateBitMap(int size)
@@ -127,13 +139,48 @@ public class WorldGenerator : MonoBehaviour
         bool spawned = false;
         do
         {
-            int r = Random.Range(1, SIZE - 1);
-            int c = Random.Range(1, SIZE - 1);
+            int r = Random.Range(4, SIZE - 4);
+            int c = Random.Range(4, SIZE - 4);
             if (floraMap[r * FLORA_MULT, c * FLORA_MULT] == 0)
             {
                 Instantiate(toSpawn, new Vector3(c, r, 0), Quaternion.identity);
                 spawned = true;
             }
         } while (!spawned);
+    }
+
+    void TrackPlayer()
+    {
+        Vector2 pos = player.transform.position;
+        
+        if (pos.x < 0 || pos.x > SIZE || pos.y > SIZE || pos.y < 0)
+        {
+            Vector2 nearestValid = new Vector2(pos.x, pos.y);
+            
+            if (pos.x < 0)
+            {
+                // player is off map left
+                nearestValid.x = 0;
+            }
+            else if (pos.x > SIZE)
+            {
+                // player is off map right
+                nearestValid.x = SIZE;
+            }
+            if (pos.y > SIZE)
+            {
+                // player is off map above
+                nearestValid.y = SIZE;
+            }
+            else if (pos.y < 0)
+            {
+                // player is off map below
+                nearestValid.y = 0;
+            }
+
+            float colorVal = Vector2.Distance(pos, nearestValid) / 10;
+            
+            Camera.main.backgroundColor = groundColor - new Color(colorVal,colorVal, colorVal, 1);
+        }
     }
 }
