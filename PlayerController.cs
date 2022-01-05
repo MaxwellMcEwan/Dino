@@ -7,8 +7,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     // CONST SIZE ENERGY REQUIREMENT
-    private const int ENERGY_REQUIREMENT = 500;
-    private const float GROWTH_RATE = 1.1f;
+    private const int ENERGY_REQUIREMENT = 1000;
+    private const float GROWTH_RATE = 1.05f;
 
     Rigidbody2D body;
     private float horizontal;

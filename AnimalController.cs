@@ -1,20 +1,26 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-public class MouseController : MonoBehaviour
+public class AnimalController : MonoBehaviour
 {
-    private const float RUN_SPEED = .4f;
     private const int ANIM_MIN = 4;
     private const int ANIM_MAX = 8;
     private const float RUN_DIST = .2f;
+
+    // variables that change across animals
+    public float speed = 0;
+    public int requiredLevel = 0, numCalories = 1000;
+    public GameObject blood;
 
     private Rigidbody2D body;
     private Animator animator;
     private SpriteRenderer spriteRenderer;
 
-    private float horizontal;
-    private float vertical;
+    private float horizontal, vertical;
 
     private Transform player;
 
@@ -31,7 +37,7 @@ public class MouseController : MonoBehaviour
     private void FixedUpdate()
     {
         // use our rigidbody to move
-        body.velocity = new Vector2(horizontal * RUN_SPEED, vertical * RUN_SPEED);
+        body.velocity = new Vector2(horizontal * speed, vertical * speed);
     }
 
     void AssignMove()
@@ -45,11 +51,11 @@ public class MouseController : MonoBehaviour
             {
                 case 0:
                     // right
-                    horizontal = RUN_SPEED;
+                    horizontal = speed;
                     break;
                 case 1:
                     // left
-                    horizontal = -RUN_SPEED;
+                    horizontal = -speed;
                     break;
                 case 2:
                     // idle X
@@ -63,11 +69,11 @@ public class MouseController : MonoBehaviour
             {
                 case 0:
                     // right
-                    vertical = RUN_SPEED;
+                    vertical = speed;
                     break;
                 case 1:
                     // left
-                    vertical = -RUN_SPEED;
+                    vertical = -speed;
                     break;
                 case 2:
                     // idle Y
@@ -78,9 +84,9 @@ public class MouseController : MonoBehaviour
         else
         {
             // run
-            Vector2 runDir = transform.position - player.position;
-            horizontal = runDir.x;
-            vertical = runDir.y;
+            Vector2 runDir = player.position - transform.position;
+            horizontal = runDir.x * 3;
+            vertical = runDir.y * 3;
         }
 
         if (horizontal != 0 || vertical != 0)
@@ -96,7 +102,7 @@ public class MouseController : MonoBehaviour
 
     IEnumerator Action(int animState, int length)
     {
-        animator.SetInteger("state", animState);
+        animator.SetInteger("State", animState);
 
         if (horizontal < 0)
         {
@@ -109,5 +115,29 @@ public class MouseController : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(length);
         AssignMove();
+    }
+
+    public void SetData(float spd, int rqrdLevel, int cals)
+    {
+        speed = spd;
+        requiredLevel = rqrdLevel;
+        numCalories = cals;
+    }
+    
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        if (col.transform.CompareTag("Player"))
+        {
+            PlayerController playerController = player.GetComponent<PlayerController>();
+            // is player
+            if (playerController.level >= requiredLevel)
+            {
+                // we're eaten
+                Instantiate(blood, transform.position, quaternion.identity);
+                print(numCalories);
+                playerController.Eat(numCalories);
+                Destroy(gameObject);
+            }
+        }
     }
 }
