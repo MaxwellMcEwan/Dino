@@ -11,21 +11,17 @@ public class PlayerController : MonoBehaviour
     private const float GROWTH_RATE = 1.05f;
 
     Rigidbody2D body;
-    private float horizontal;
-    private float vertical;
-    private float runSpeed;
+    private float horizontal, vertical, runSpeed;
     
     private SpriteRenderer playerSprite;
     private Animator animator;
     private bool growing;
 
-    private int currentEnergy = 0;
+    private int currentEnergy = 0, size = 1;
     public int level = 1;
-    private int size = 1;
 
     void Start()
     {
-        UpdateCameraSize();
         UpdateSpeed();
         body = GetComponent<Rigidbody2D>();
         playerSprite = GetComponentInChildren<SpriteRenderer>();
@@ -98,7 +94,6 @@ public class PlayerController : MonoBehaviour
         // midway through the animation, grow
         transform.localScale *= GROWTH_RATE;
         size++;
-        UpdateCameraSize();
         UpdateSpeed();
         if (size % 10 == 0)
         {
@@ -123,7 +118,7 @@ public class PlayerController : MonoBehaviour
         vertical = 0;
     }
 
-    void OnCollisionEnter2D(Collision2D col)
+    void OnCollisionStay2D(Collision2D col)
     {
         if (col.transform.CompareTag("Tree"))
         {
@@ -134,9 +129,8 @@ public class PlayerController : MonoBehaviour
             {
                 case 1:
                     
-                    spriteRend.color = new Color(0, 0, 0, .2f);
+                    spriteRend.color = new Color(1, 1, 1, .2f);
                     col2D.enabled = false;
-
                     StartCoroutine(ResetObstacle(col.gameObject, spriteRend, col2D));
                     break;
                 default:
@@ -145,6 +139,7 @@ public class PlayerController : MonoBehaviour
                         col.transform.rotation = new Quaternion(.6f, 0, 0, 1);
                         spriteRend.color = new Color(0, 0, 0, .2f);
                         col2D.enabled = false;
+                        col.gameObject.layer = LayerMask.NameToLayer("Background");
                     }
                     break;
             }
@@ -164,11 +159,6 @@ public class PlayerController : MonoBehaviour
                 reset = true;
             }
         } while (!reset);
-    }
-
-    void UpdateCameraSize()
-    {
-        Camera.main.orthographicSize = transform.localScale.x * 2;
     }
 
     void UpdateSpeed()

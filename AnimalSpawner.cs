@@ -7,6 +7,8 @@ public class AnimalSpawner : MonoBehaviour
 {
     private const int GLOBAL_NUM = 40;
     private WorldGenerator worldGenerator;
+
+    public GameObject bird0;
     
     private string[] details = new string[] {"Speed", "RequiredLevel", "Calories"};
     
@@ -52,7 +54,6 @@ public class AnimalSpawner : MonoBehaviour
         // use world generators spawn function to put item on the map
         worldGenerator.SpawnItem(spawnAnimal);
     }
-
 
     void ReadAnimalDataIn()
     {

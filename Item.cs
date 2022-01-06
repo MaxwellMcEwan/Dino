@@ -10,7 +10,7 @@ public class Item : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.transform.tag == "Player")
+        if (col.transform.CompareTag("Player"))
         {
             // give the item to the player
             col.transform.GetComponent<PlayerController>().Eat(calories);

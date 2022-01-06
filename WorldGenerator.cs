@@ -1,16 +1,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using Unity.Mathematics;
 using UnityEngine;
+using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour
 {
     // CONSTANTS
-    const int SIZE = 30;
-    const int SMOOTHS = 7;
-    const int FLORA_MULT = 4;
+    private const int SIZE = 30, SMOOTHS = 7, FLORA_MULT = 4, NUM_ROCKS = 30;
     
     // general world
     public GameObject world;
@@ -20,8 +20,16 @@ public class WorldGenerator : MonoBehaviour
     private int[,] floraMap = new int[SIZE * FLORA_MULT, SIZE * FLORA_MULT];
 
     // flora
-    public GameObject tree0, tree1, currTree;
+    public GameObject tree0, tree1;
+    private GameObject currTree;
+    
+    // rocks
+    public GameObject singleRock, doubleRock;
+    private GameObject currRock;
 
+    // grass details
+    private GrassDetails grassDetails;
+    
     // player
     public GameObject player;
     
@@ -30,6 +38,10 @@ public class WorldGenerator : MonoBehaviour
     {
         Camera.main.backgroundColor = groundColor;
         
+        // spawn grass details
+        grassDetails = GetComponent<GrassDetails>();
+        grassDetails.SpawnDetails(SIZE, world.transform);
+
         // flora
         floraMap = GenerateBitMap(SIZE * FLORA_MULT);
         SmoothBitMap(floraMap, SIZE * FLORA_MULT); 
@@ -38,6 +50,23 @@ public class WorldGenerator : MonoBehaviour
         // spawn player on land
         SpawnItem(player);
         player = FindObjectOfType<PlayerController>().gameObject;
+
+        // spawn rocks
+        for (int i = 0; i < NUM_ROCKS; i++)
+        {
+            int rockType = Random.Range(0, 2);
+            switch (rockType)
+            {
+                case 0:
+                    currRock = singleRock;
+                    break;
+                case 1:
+                    currRock = doubleRock;
+                    break;
+            }
+            
+            SpawnItem(currRock, world.transform);
+        }
     }
 
     private void Update()
@@ -45,6 +74,8 @@ public class WorldGenerator : MonoBehaviour
         TrackPlayer();
     }
 
+    
+    
     int[,] GenerateBitMap(int size)
     {
         int[,] newBitMap = new int[size, size];
@@ -134,16 +165,23 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
-    public void SpawnItem(GameObject toSpawn)
+    public void SpawnItem(GameObject toSpawn, Transform parent = null)
     {
         bool spawned = false;
         do
         {
             int r = Random.Range(4, SIZE - 4);
             int c = Random.Range(4, SIZE - 4);
+            Vector3 randomOffset = new Vector3(Random.Range(-.5f, .5f), Random.Range(-.5f, .5f), 0);
+            
             if (floraMap[r * FLORA_MULT, c * FLORA_MULT] == 0)
             {
-                Instantiate(toSpawn, new Vector3(c, r, 0), Quaternion.identity);
+                GameObject newSpawn = Instantiate(toSpawn, new Vector3(c, r, 0) + randomOffset, Quaternion.identity);
+                if (parent != null)
+                {
+                    newSpawn.transform.SetParent(parent);
+                }
+
                 spawned = true;
             }
         } while (!spawned);
