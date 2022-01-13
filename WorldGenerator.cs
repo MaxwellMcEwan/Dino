@@ -4,20 +4,22 @@ using System.Collections.Generic;
 using System.Drawing;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour
 {
     // CONSTANTS
-    private const int SIZE = 30, SMOOTHS = 7, FLORA_MULT = 4, NUM_ROCKS = 30;
+    private const int SMOOTHS = 7, FLORA_MULT = 4, NUM_ROCKS = 30, NUM_FLOCKS = 6;
     
     // general world
     public GameObject world;
-    public Color groundColor = new Color((float)117/255, (float)154/255, 128/255, 1);
-    
+    public Color groundColor = new Color((float)117/255, (float)154/255, 128/255, 1), microbeColor = new Color((float)1/255, (float)1/255, 1/255, 1);
+    private Color currBackground;
+
     // bitMaps
-    private int[,] floraMap = new int[SIZE * FLORA_MULT, SIZE * FLORA_MULT];
+    private int[,] floraMap = new int[GlobalVariables.SIZE * FLORA_MULT, GlobalVariables.SIZE * FLORA_MULT];
 
     // flora
     public GameObject tree0, tree1;
@@ -33,25 +35,64 @@ public class WorldGenerator : MonoBehaviour
     // player
     public GameObject player;
     
-    // Start is called before the first frame update
-    void Awake()
+    // birds
+    private AnimalSpawner animalSpawner;
+    
+    // change Between Scenes (defaulted to microbe)
+    private bool randomizeSize = false;
+    private string detailsPath = "Environment\\CellDetails";
+    private int bgDetails = 7000;
+
+
+    public void SpawnWorld()
     {
-        Camera.main.backgroundColor = groundColor;
+        switch (SceneManager.GetActiveScene().buildIndex)
+        {
+            case 1:
+                // microbe setup
+                currBackground = microbeColor;
+                break;
+            case 2:
+                // grass setup
+                currBackground = groundColor;
+                randomizeSize = true;
+                detailsPath = "Environment\\GrassDetails";
+                animalSpawner.SetWorld();
+                bgDetails = 10000;
+                break;
+        }
+        
+        Camera.main.backgroundColor = currBackground;
         
         // spawn grass details
         grassDetails = GetComponent<GrassDetails>();
-        grassDetails.SpawnDetails(SIZE, world.transform);
+        grassDetails.SpawnDetails(detailsPath, bgDetails);
 
         // flora
-        floraMap = GenerateBitMap(SIZE * FLORA_MULT);
-        SmoothBitMap(floraMap, SIZE * FLORA_MULT); 
+        floraMap = GenerateBitMap(GlobalVariables.SIZE * FLORA_MULT);
+        SmoothBitMap(floraMap, GlobalVariables.SIZE * FLORA_MULT); 
         PlotFloraMap();
 
         // spawn player on land
         SpawnItem(player);
         player = FindObjectOfType<PlayerController>().gameObject;
 
+        // spawn birds
+        animalSpawner = GetComponent<AnimalSpawner>();
+        animalSpawner.SpawnFlocks(GlobalVariables.SIZE, NUM_FLOCKS, world.transform);
+
         // spawn rocks
+        SpawnRocks();
+        
+    }
+
+    private void Update()
+    {
+        TrackPlayer();
+    }
+
+    public void SpawnRocks()
+    {
         for (int i = 0; i < NUM_ROCKS; i++)
         {
             int rockType = Random.Range(0, 2);
@@ -68,13 +109,6 @@ public class WorldGenerator : MonoBehaviour
             SpawnItem(currRock, world.transform);
         }
     }
-
-    private void Update()
-    {
-        TrackPlayer();
-    }
-
-    
     
     int[,] GenerateBitMap(int size)
     {
@@ -136,10 +170,10 @@ public class WorldGenerator : MonoBehaviour
     void PlotFloraMap()
     {
         // build game map from bitMap
-        for (int r = SIZE * FLORA_MULT - 1; r > -1; r--)
+        for (int r = GlobalVariables.SIZE * FLORA_MULT - 1; r > -1; r--)
         {
             // every row
-            for (int c = SIZE * FLORA_MULT - 1; c > -1; c--)
+            for (int c = GlobalVariables.SIZE * FLORA_MULT - 1; c > -1; c--)
             {
                 // every box
                 // find type
@@ -158,7 +192,10 @@ public class WorldGenerator : MonoBehaviour
                     GameObject newFlora = Instantiate(currTree,
                         new Vector3((float) c / FLORA_MULT - ((float) FLORA_MULT / 10), (float) r / FLORA_MULT, -1),
                         Quaternion.identity);
-                    newFlora.transform.localScale = new Vector3(Random.Range(2f, 2.6f), Random.Range(2f, 2.8f), 1);
+                    if (randomizeSize)
+                    {
+                        newFlora.transform.localScale = new Vector3(Random.Range(newFlora.transform.localScale.x * 1.1f, newFlora.transform.localScale.x * 1.6f), Random.Range(newFlora.transform.localScale.x * 1.1f, newFlora.transform.localScale.x * 1.6f), 1);
+                    }
                     newFlora.transform.parent = world.transform;
                 }
             }
@@ -170,8 +207,8 @@ public class WorldGenerator : MonoBehaviour
         bool spawned = false;
         do
         {
-            int r = Random.Range(4, SIZE - 4);
-            int c = Random.Range(4, SIZE - 4);
+            int r = Random.Range(4, GlobalVariables.SIZE - 4);
+            int c = Random.Range(4, GlobalVariables.SIZE - 4);
             Vector3 randomOffset = new Vector3(Random.Range(-.5f, .5f), Random.Range(-.5f, .5f), 0);
             
             if (floraMap[r * FLORA_MULT, c * FLORA_MULT] == 0)
@@ -191,7 +228,7 @@ public class WorldGenerator : MonoBehaviour
     {
         Vector2 pos = player.transform.position;
         
-        if (pos.x < 0 || pos.x > SIZE || pos.y > SIZE || pos.y < 0)
+        if (pos.x < 0 || pos.x > GlobalVariables.SIZE || pos.y > GlobalVariables.SIZE || pos.y < 0)
         {
             Vector2 nearestValid = new Vector2(pos.x, pos.y);
             
@@ -200,15 +237,15 @@ public class WorldGenerator : MonoBehaviour
                 // player is off map left
                 nearestValid.x = 0;
             }
-            else if (pos.x > SIZE)
+            else if (pos.x > GlobalVariables.SIZE)
             {
                 // player is off map right
-                nearestValid.x = SIZE;
+                nearestValid.x = GlobalVariables.SIZE;
             }
-            if (pos.y > SIZE)
+            if (pos.y > GlobalVariables.SIZE)
             {
                 // player is off map above
-                nearestValid.y = SIZE;
+                nearestValid.y = GlobalVariables.SIZE;
             }
             else if (pos.y < 0)
             {
@@ -218,7 +255,12 @@ public class WorldGenerator : MonoBehaviour
 
             float colorVal = Vector2.Distance(pos, nearestValid) / 10;
             
-            Camera.main.backgroundColor = groundColor - new Color(colorVal,colorVal, colorVal, 1);
+            Camera.main.backgroundColor = currBackground - new Color(colorVal,colorVal, colorVal, 1);
         }
     }
+}
+
+public static class GlobalVariables
+{
+    public const int SIZE = 30;
 }

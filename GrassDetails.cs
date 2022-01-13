@@ -4,36 +4,44 @@ using UnityEngine;
 
 public class GrassDetails : MonoBehaviour
 {
-    private const int NUM_DETAILS = 10000;
-    
     //define a list
-    public static List <GameObject> grassMarks = new List<GameObject>();
+    public static List <GameObject> groundDetails = new List<GameObject>();
+
+
+    public Transform detailsParent;
     
-    public void SpawnDetails(int boardSize, Transform parent)
+    // amount of objects we loaded in
+    private int numDetails;
+    
+    public void SpawnDetails(string path, int numSpawns)
     {
-        Object[] subListObjects = Resources.LoadAll("Environment\\GrassDetails", typeof(GameObject));
+        // get a list of all available grass details to make
+        Object[] subListObjects = Resources.LoadAll(path, typeof(GameObject));
         foreach (Object subListObject in subListObjects) 
         {
             // convert the objects into game objects and add them to our permanent list
             GameObject mark = (GameObject)subListObject;
-            print(mark.name);
-            grassMarks.Add(mark);
+            groundDetails.Add(mark);
+            numDetails++;
         }
 
-        for (int i = 0; i < NUM_DETAILS; i++)
+        // run this loop NUM_DETAILS amount of times
+        for (int i = 0; i < numSpawns; i++)
         {
-            int markIndex = Random.Range(0,10);
-            if (markIndex >= 5)
-            {
-                markIndex = 0;
-            }
-
+            // get a random index, it is out of range because I want there to be a higher chance of the default grass mark
+            int markIndex = Random.Range(0, numDetails);
+            
+            // produce a random offset to our detail
             Vector3 randomOffset = new Vector3(Random.Range(-.99f, .99f), Random.Range(-.99f, .99f), 0);
             
-            int r = Random.Range(0, boardSize);
-            int c = Random.Range(0, boardSize);
-            GameObject newSpawn = Instantiate(grassMarks[markIndex], new Vector3(c, r, 0) + randomOffset, Quaternion.identity);
-            newSpawn.transform.SetParent(parent);
+            // select a random x, y
+            int r = Random.Range(0, GlobalVariables.SIZE);
+            int c = Random.Range(0, GlobalVariables.SIZE);
+            
+            // choose the object from the index, add the offset, and spawn the detail. Set the details parent
+            GameObject newSpawn = Instantiate(groundDetails[markIndex], new Vector3(c, r, 0) + randomOffset, Quaternion.identity);
+            newSpawn.transform.localScale = new Vector3(Random.Range(newSpawn.transform.localScale.x * .60f, newSpawn.transform.localScale.x * 1.2f), Random.Range(newSpawn.transform.localScale.x * .6f, newSpawn.transform.localScale.x * 1.2f), 1);
+            newSpawn.transform.SetParent(detailsParent);
         }
     }
 }
