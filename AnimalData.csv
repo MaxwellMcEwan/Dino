@@ -1,6 +1,6 @@
 ﻿Name,Speed,RequiredLevel,Calories,Predator
-mouse0,0.5,1,1500,0
+mouse0,0.5,1,15000,0
 bear0,0.5,3,10000,1
 sheep0,0.3,2,5000,0
 wolf0,0.7,3,40,1
-mouse1,0.6,1,2000,0
+mouse1,0.6,1,20000,0

@@ -13,6 +13,8 @@ public class UIManager : MonoBehaviour
     private int score = 0;
 
     public Slider calSlider;
+
+    public Text extrasEarned;
     
     public List <Text> topScoreText = new List<Text>();
     
@@ -23,9 +25,17 @@ public class UIManager : MonoBehaviour
         if (SceneManager.GetActiveScene().buildIndex == 0)
         {
             UpdateTopScores();
+        } else if (SceneManager.GetActiveScene().name == "LoseScene")
+        {
+            UpdateExtras();
         }
     }
 
+    public void UpdateExtras()
+    {
+        extrasEarned.text = PlayerPrefs.GetInt("NewExtras").ToString() + " Extras";
+    }
+    
     public void UpdateTopScores()
     {
         StreamReader strReader = new StreamReader("C:\\Users\\maxwe\\OneDrive\\Documents\\Unity Projects\\MyGame\\Assets\\Scripts\\HighScores.csv");

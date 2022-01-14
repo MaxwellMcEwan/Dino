@@ -8,11 +8,9 @@ using Random = UnityEngine.Random;
 public class GameEvents : MonoBehaviour
 {
     private const int DIR_TIMER = 5;
+    private const int COIN_VALUE = 100000;
 
     string highScoresPath = "C:\\Users\\maxwe\\OneDrive\\Documents\\Unity Projects\\MyGame\\Assets\\Scripts\\HighScores.csv";
-    
-    public GameObject loseScreen;
-    public bool gameInSession;
     
     private UIManager uiMan;
     private int gameState = 0;
@@ -26,7 +24,7 @@ public class GameEvents : MonoBehaviour
         uiMan = GetComponent<UIManager>();
         gameState = SceneManager.GetActiveScene().buildIndex;
         
-        if (gameState > 0)
+        if (gameState > 0 && SceneManager.GetActiveScene().name != "LoseScene")
         {
             GetComponent<WorldGenerator>().SpawnWorld();
         }
@@ -42,7 +40,6 @@ public class GameEvents : MonoBehaviour
     {
         if (gameState == 0 && Input.GetKeyUp(KeyCode.P))
         {
-            gameInSession = true;
             SceneManager.LoadScene("MicroScene");
         } 
     }
@@ -65,23 +62,25 @@ public class GameEvents : MonoBehaviour
     public void StartGame()
     {
         GetComponent<WorldGenerator>().SpawnWorld();
-        gameInSession = true;
     }
     
     public void PlayerDied(int score)
     {
-        // change Ui
-        loseScreen.SetActive(true);
-        
         // add this score to our high-scores list
         using (StreamWriter sw = File.AppendText(highScoresPath)) 
         {
             sw.WriteLine("null" + ',' + score.ToString());
         }
+        
+        PlayerPrefs.SetInt("NewExtras", score/COIN_VALUE);
+
+        // load lose scene
+        SceneManager.LoadScene("LoseScene");
     }
 
-    public void GameEnded()
+    public void ResetGame()
     {
-        gameInSession = false;
+        // load menu scene
+        SceneManager.LoadScene("MainMenu");
     }
 }

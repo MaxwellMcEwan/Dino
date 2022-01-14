@@ -41,11 +41,17 @@ public class WorldGenerator : MonoBehaviour
     // change Between Scenes (defaulted to microbe)
     private bool randomizeSize = false;
     private string detailsPath = "Environment\\CellDetails";
+    private string animalsPath = "Animals\\Cells";
     private int bgDetails = 7000;
 
 
     public void SpawnWorld()
     {
+        // get the universally used components
+        grassDetails = GetComponent<GrassDetails>();
+        animalSpawner = GetComponent<AnimalSpawner>();
+        
+        // change game assets and prefabs based on the build index
         switch (SceneManager.GetActiveScene().buildIndex)
         {
             case 1:
@@ -57,15 +63,21 @@ public class WorldGenerator : MonoBehaviour
                 currBackground = groundColor;
                 randomizeSize = true;
                 detailsPath = "Environment\\GrassDetails";
-                animalSpawner.SetWorld();
+                animalsPath = "Animals\\AnimalObjects";
                 bgDetails = 10000;
+                
+                // spawn birds
+                animalSpawner.SpawnFlocks(GlobalVariables.SIZE, NUM_FLOCKS, world.transform);
+                
+                // spawn rocks
+                SpawnRocks();
                 break;
         }
         
+        // change the cameras background color
         Camera.main.backgroundColor = currBackground;
         
         // spawn grass details
-        grassDetails = GetComponent<GrassDetails>();
         grassDetails.SpawnDetails(detailsPath, bgDetails);
 
         // flora
@@ -76,21 +88,10 @@ public class WorldGenerator : MonoBehaviour
         // spawn player on land
         SpawnItem(player);
         player = FindObjectOfType<PlayerController>().gameObject;
-
-        // spawn birds
-        animalSpawner = GetComponent<AnimalSpawner>();
-        animalSpawner.SpawnFlocks(GlobalVariables.SIZE, NUM_FLOCKS, world.transform);
-
-        // spawn rocks
-        SpawnRocks();
         
+        animalSpawner.SetWorld(animalsPath);
     }
-
-    private void Update()
-    {
-        TrackPlayer();
-    }
-
+    
     public void SpawnRocks()
     {
         for (int i = 0; i < NUM_ROCKS; i++)
@@ -222,41 +223,6 @@ public class WorldGenerator : MonoBehaviour
                 spawned = true;
             }
         } while (!spawned);
-    }
-
-    void TrackPlayer()
-    {
-        Vector2 pos = player.transform.position;
-        
-        if (pos.x < 0 || pos.x > GlobalVariables.SIZE || pos.y > GlobalVariables.SIZE || pos.y < 0)
-        {
-            Vector2 nearestValid = new Vector2(pos.x, pos.y);
-            
-            if (pos.x < 0)
-            {
-                // player is off map left
-                nearestValid.x = 0;
-            }
-            else if (pos.x > GlobalVariables.SIZE)
-            {
-                // player is off map right
-                nearestValid.x = GlobalVariables.SIZE;
-            }
-            if (pos.y > GlobalVariables.SIZE)
-            {
-                // player is off map above
-                nearestValid.y = GlobalVariables.SIZE;
-            }
-            else if (pos.y < 0)
-            {
-                // player is off map below
-                nearestValid.y = 0;
-            }
-
-            float colorVal = Vector2.Distance(pos, nearestValid) / 10;
-            
-            Camera.main.backgroundColor = currBackground - new Color(colorVal,colorVal, colorVal, 1);
-        }
     }
 }
 

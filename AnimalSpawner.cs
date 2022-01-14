@@ -18,13 +18,13 @@ public class AnimalSpawner : MonoBehaviour
 
     Dictionary<string, Dictionary<string, float>> animalData = new Dictionary<string, Dictionary<string, float>>();
 
-    public void SetWorld()
+    public void SetWorld(string path)
     {
         worldGenerator = GetComponent<WorldGenerator>();
 
         ReadAnimalDataIn();
         
-        Object[] subListAnimals = Resources.LoadAll("Animals\\AnimalObjects", typeof(GameObject));
+        Object[] subListAnimals = Resources.LoadAll(path, typeof(GameObject));
         foreach (Object subListAnimal in subListAnimals) 
         {
             // convert the objects into game objects and add them to our permanent list
